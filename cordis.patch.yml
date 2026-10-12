@@ -1,0 +1,6 @@
+# The original provider returns when this bundle is disabled or removed.
+- id: web-fetch-http
+  disabled: true
+- insert:
+    - id: web-fetch-http-clash
+      name: ./src/index.js
