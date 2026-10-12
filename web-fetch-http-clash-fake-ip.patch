@@ -1,0 +1,526 @@
+diff --git a/docs/config-catalog.md b/docs/config-catalog.md
+index 7c40fad9136fdfa003ba430f3fa3f5467d29b1c6..6e05fc721131e00f2af5a1f58be2b6304b265599 100644
+--- a/docs/config-catalog.md
++++ b/docs/config-catalog.md
+@@ -4162,6 +4162,8 @@ export interface Config {
+   maxRedirects?: number
+   /** `User-Agent` header sent on every request. */
+   userAgent?: string
++  /** Accept DNS answers in Clash's `198.18.0.0/15` fake-IP range. Disabled by default. */
++  allowClashFakeIp?: boolean
+ }
+ ```
+ <!-- END GENERATED config-catalog:@deepseek-ai/dsh-web-fetch-http -->
+diff --git a/docs/config-catalog.zh.md b/docs/config-catalog.zh.md
+index 44b5a7345587d0d0b584854bd1fa7e413d05ec31..c0f70dff734bd8205a300cb5f082e7dc72ec95d2 100644
+--- a/docs/config-catalog.zh.md
++++ b/docs/config-catalog.zh.md
+@@ -4164,6 +4164,8 @@ export interface Config {
+   maxRedirects?: number
+   /** `User-Agent` header sent on every request. */
+   userAgent?: string
++  /** Accept DNS answers in Clash's `198.18.0.0/15` fake-IP range. Disabled by default. */
++  allowClashFakeIp?: boolean
+ }
+ ```
+ <!-- END GENERATED config-catalog:@deepseek-ai/dsh-web-fetch-http -->
+diff --git a/packages/web/web-fetch-http/README.i18n.yaml b/packages/web/web-fetch-http/README.i18n.yaml
+index 0c1239678824591ea71a8385b888c1aae47d67a7..a2211ef7466cf5fd185177bea0c49de08ccf7035 100644
+--- a/packages/web/web-fetch-http/README.i18n.yaml
++++ b/packages/web/web-fetch-http/README.i18n.yaml
+@@ -9,8 +9,8 @@
+   en: 2e839bfc4c365701
+   zh: 62dd5239ae93471c
+ /deepseek-ai-dsh-web-fetch-http/summary:
+-  en: 88157c32f36635d5
+-  zh: a149d576df0349bc
++  en: 17ea596367154aae
++  zh: 6d44493fafa60c27
+ /deepseek-ai-dsh-web-fetch-http/table-of-contents:
+   en: d152484eb41ac6b4
+   zh: 09388d293f9be9cb
+@@ -18,17 +18,17 @@
+   en: 630b12516d53e905
+   zh: eed124cfe9c8dc1f
+ /deepseek-ai-dsh-web-fetch-http/use-this-package/when-to-choose-it:
+-  en: eb52e77279c21d6f
+-  zh: 0560e89caa377bfc
++  en: 61721479abab7716
++  zh: 67753b5ccd61127e
+ /deepseek-ai-dsh-web-fetch-http/use-this-package/minimal-configuration:
+-  en: e4534189d5230861
+-  zh: 5905731d7b5d9c60
++  en: f5b4311762a7b629
++  zh: 1ed726d1281da91d
+ /deepseek-ai-dsh-web-fetch-http/use-this-package/what-a-fetch-returns:
+   en: 2d18cdcc9b53dd0f
+   zh: 3bc6ca7c5933ee5d
+ /deepseek-ai-dsh-web-fetch-http/use-this-package/transport-behavior:
+-  en: c432147daf2877cf
+-  zh: c14d507dd66e124a
++  en: 4007a53e2956853f
++  zh: 81e47ccee4a64d58
+ /deepseek-ai-dsh-web-fetch-http/use-this-package/failures-and-recovery:
+   en: 35407f106dc65deb
+   zh: 02118072fba68b8f
+@@ -39,11 +39,11 @@
+   en: a8d806f0706f02e2
+   zh: d922732a5b7e88bd
+ /deepseek-ai-dsh-web-fetch-http/understand-the-implementation/source-map:
+-  en: e22ec70d55e0d8f7
+-  zh: 1a333660eae37b1f
++  en: e1c4ee428f28f864
++  zh: 2e1b346d935c32b0
+ /deepseek-ai-dsh-web-fetch-http/understand-the-implementation/read-path:
+-  en: 749c0ffeac145807
+-  zh: 1468821a33a9518a
++  en: 84a8b56d8ff9b4d0
++  zh: 58be41ef4d6c01b0
+ /deepseek-ai-dsh-web-fetch-http/further-exploration:
+   en: eeaaf0b455673a1c
+   zh: 0874f9f44ff9a220
+diff --git a/packages/web/web-fetch-http/README.md b/packages/web/web-fetch-http/README.md
+index a3e6da087df37b051aa2dc506eb718b4876601de..1e6564bc77657bac69d91d314656d2bcc16a4b99 100644
+--- a/packages/web/web-fetch-http/README.md
++++ b/packages/web/web-fetch-http/README.md
+@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
+ 
+ ## Summary
+ 
+-With `dsh-web-fetch-http`, the harness can fetch public HTTP(S) pages through the web service (`ctx.web`) and get their status code plus bounded, decoded content without sending credentials. Choose it when a composition needs safe retrieval with URL validation, public-address resolution, connection pinning, same-origin redirects, byte and character caps, and an explicit product `User-Agent`. It returns non-2xx responses as results rather than errors, and rejects non-public destinations, binary data, and unsupported content types. The model-facing `web_fetch` tool lives in `dsh-tool-web`, which renders this provider's bodies.
++With `dsh-web-fetch-http`, the harness can fetch public HTTP(S) pages through the web service (`ctx.web`) and get their status code plus bounded, decoded content without sending credentials. Choose it when a composition needs safe retrieval with URL validation, public-address resolution, connection pinning, same-origin redirects, byte and character caps, and an explicit product `User-Agent`. By default it rejects non-public destinations; `allowClashFakeIp` is the sole exception and accepts only hostname DNS answers in `198.18.0.0/15`. It returns non-2xx responses as results rather than errors, and rejects binary data and unsupported content types. The model-facing `web_fetch` tool lives in `dsh-tool-web`, which renders this provider's bodies.
+ 
+ ## Table of Contents
+ 
+@@ -29,7 +29,7 @@ Mount the provider in a composition that already loads the web service; it regis
+ 
+ ### When to choose it
+ 
+-Choose this backend when a deployment must fetch public pages with bounded output and safe transport: no credentials are sent, every resolved address must be public, each connection is pinned to the validated answer set, redirects cannot escape the origin, and every response is capped.
++Choose this backend when a deployment must fetch public pages with bounded output and safe transport: no credentials are sent, the baseline public-address policy applies, each connection is pinned to the validated answer set, redirects cannot escape the origin, and every response is capped. Enable `allowClashFakeIp` only when the local DNS layer maps public hostnames into Clash's `198.18.0.0/15` range.
+ 
+ ### Minimal configuration
+ 
+@@ -40,6 +40,16 @@ Load the web service and the provider; configurable limits have safe defaults an
+ - name: '@deepseek-ai/dsh-web-fetch-http'
+ ```
+ 
++For Clash fake-IP DNS mode, add this overlay to the existing `web-fetch-http` row in the shipped profile bundle:
++
++```yaml
++- id: web-fetch-http
++  config:
++    allowClashFakeIp: true
++```
++
++Use `allowClashFakeIp` only when the local DNS layer maps public hostnames into Clash's `198.18.0.0/15` fake-IP range; the option is disabled by default.
++
+ | Field | Default | Meaning |
+ |---|---|---|
+ | `maxResponseBytes` | `5,000,000` | Maximum response body size in bytes |
+@@ -47,6 +57,7 @@ Load the web service and the provider; configurable limits have safe defaults an
+ | `timeoutMs` | `30,000` | Fetch timeout — a resource backstop, not the model-facing tool budget |
+ | `maxRedirects` | `5` | Maximum same-origin redirect hops (`0` follows none) |
+ | `userAgent` | `deepseek-harness/…` | `User-Agent` header sent on every request |
++| `allowClashFakeIp` | `false` | Accept DNS answers in Clash's `198.18.0.0/15` fake-IP range; explicit non-public IP literals remain blocked |
+ 
+ The generated [configuration catalog](../../../docs/config-catalog.md#deepseek-aidsh-web-fetch-http) is the exhaustive source for every accepted field and its JSDoc.
+ 
+@@ -61,7 +72,7 @@ const page = await ctx.web.fetch({ url: 'https://example.com' })
+ 
+ ### Transport behavior
+ 
+-The provider keeps requests anonymous and bounded: it accepts only `http:` and `https:` URLs without embedded credentials and rejects URLs over 2,048 characters. It resolves each hostname once, rejects the complete result if any IPv4 or IPv6 address is not public unicast, and pins the connection to that validated set. IPv6 checks discover the active DNS64 prefix and reject translations to non-public IPv4. Each same-origin redirect repeats resolution and pinning; cross-origin redirects fail and require a fresh call. The provider also enforces byte, character, hop, and time caps, rejects unsupported content types, and sends an explicit product `User-Agent`.
++The provider keeps requests anonymous and bounded: it accepts only `http:` and `https:` URLs without embedded credentials and rejects URLs over 2,048 characters. It resolves each hostname once, rejects the complete result when any address violates the baseline public-address policy, and pins the connection to that accepted set. When `allowClashFakeIp` is enabled, only DNS answers for hostnames in Clash's `198.18.0.0/15` fake-IP range are added to the accepted set; connections remain pinned, explicit non-public IP literals remain blocked, and every other non-public range stays blocked. IPv6 checks discover the active DNS64 prefix and reject translations to non-public IPv4. Each same-origin redirect repeats resolution and pinning; cross-origin redirects fail and require a fresh call. The provider also enforces byte, character, hop, and time caps, rejects unsupported content types, and sends an explicit product `User-Agent`.
+ 
+ ### Failures and recovery
+ 
+@@ -90,13 +101,13 @@ The package is built on one separation and one layered timeout:
+ |---|---|
+ | [`src/index.ts`](src/index.ts) | Plugin entry: config schema, limit validation, provider registration |
+ | [`src/provider.ts`](src/provider.ts) | The `HttpFetchProvider`: pinned transport, redirect following, capped reads, charset decoding |
+-| [`src/network.ts`](src/network.ts) | Public-address resolution, DNS64 discovery, and connection pinning |
++| [`src/network.ts`](src/network.ts) | Allowed-address resolution, DNS64 discovery, and connection pinning |
+ | [`src/policy.ts`](src/policy.ts) | URL validation, same-origin checks, content-type classification, charset parsing |
+ | — | No runtime invariant companion is published; this package exposes no independent event sequence or mutable data relation beyond contracts enforced at its owning seam. |
+ 
+ ### Read path
+ 
+-A fetch validates the URL, resolves the hostname once, rejects the complete answer set when any address is not public, and pins the connection to the accepted addresses. It repeats that check for each same-origin redirect; a cross-origin redirect or non-public target fails before response bytes are accepted. The final response is classified by `Content-Type`, decoded from its declared charset, and read under the byte cap; the decoded text is then truncated to the character cap.
++A fetch validates the URL, resolves the hostname once, rejects the complete answer set when an address violates the active address policy, and pins the connection to the accepted addresses. The active policy rejects non-public addresses by default and accepts only `198.18.0.0/15` hostname DNS answers when `allowClashFakeIp` is enabled; explicit non-public IP literals remain blocked. It repeats that check for each same-origin redirect; a cross-origin redirect fails before response bytes are accepted. The final response is classified by `Content-Type`, decoded from its declared charset, and read under the byte cap; the decoded text is then truncated to the character cap.
+ 
+ </details>
+ 
+diff --git a/packages/web/web-fetch-http/README.zh.md b/packages/web/web-fetch-http/README.zh.md
+index d57d10545ae8da63515ba1e3d53a06bca5090b67..59e52c0baae9a170ba812fe62e8a159e3efa6e46 100644
+--- a/packages/web/web-fetch-http/README.zh.md
++++ b/packages/web/web-fetch-http/README.zh.md
+@@ -9,7 +9,7 @@ kind: "package-reference"
+ 
+ ## 概述
+ 
+-有了 `dsh-web-fetch-http`，harness 可以通过 web 服务（`ctx.web`）抓取公共 HTTP(S) 页面，并在不发送凭据的情况下获得状态码与有界、解码后的内容。当组合需要 URL 校验、公开地址解析、连接固定、仅同源重定向、字节和字符上限及显式产品 `User-Agent` 时选择它。它把非 2xx 响应作为结果而非错误返回，并拒绝非公开目标、二进制数据与不受支持的内容类型。面向模型的 `web_fetch` 工具位于 `dsh-tool-web`，由它渲染本提供方的正文。
++有了 `dsh-web-fetch-http`，harness 可以通过 web 服务（`ctx.web`）抓取公共 HTTP(S) 页面，并在不发送凭据的情况下获得状态码与有界、解码后的内容。当组合需要 URL 校验、地址解析、连接固定、仅同源重定向、字节和字符上限及显式产品 `User-Agent` 时选择它。默认情况下它拒绝非公开目标；`allowClashFakeIp` 是唯一例外，只接受主机名 DNS 结果中的 `198.18.0.0/15`。它把非 2xx 响应作为结果而非错误返回，并拒绝二进制数据与不受支持的内容类型。面向模型的 `web_fetch` 工具位于 `dsh-tool-web`，由它渲染本提供方的正文。
+ 
+ ## 目录
+ 
+@@ -29,7 +29,7 @@ kind: "package-reference"
+ 
+ ### 何时选择
+ 
+-当部署必须以有界输出和安全传输抓取公共页面时选择此后端：不发送凭据，每个已解析地址必须是公共地址，每次连接都固定到已校验的地址集合，重定向无法逃出源站，每个响应都有上限。
++当部署必须以有界输出和安全传输抓取公共页面时选择此后端：不发送凭据，采用默认的公共地址策略，每次连接都固定到已校验的地址集合，重定向无法逃出源站，每个响应都有上限。只有在本地 DNS 层把公共主机名映射到 Clash 的 `198.18.0.0/15` 网段时才启用 `allowClashFakeIp`。
+ 
+ ### 最小配置
+ 
+@@ -40,6 +40,16 @@ kind: "package-reference"
+ - name: '@deepseek-ai/dsh-web-fetch-http'
+ ```
+ 
++对于 Clash fake-IP DNS 模式，把以下 overlay 加到 shipped profile bundle 已有的 `web-fetch-http` 行：
++
++```yaml
++- id: web-fetch-http
++  config:
++    allowClashFakeIp: true
++```
++
++仅当本地 DNS 层把公共主机名映射到 Clash 的 `198.18.0.0/15` fake-IP 网段时启用 `allowClashFakeIp`；该选项默认关闭。
++
+ | 字段 | 默认值 | 含义 |
+ |---|---|---|
+ | `maxResponseBytes` | `5,000,000` | 响应主体最大字节数 |
+@@ -47,6 +57,7 @@ kind: "package-reference"
+ | `timeoutMs` | `30,000` | 抓取超时——资源兜底，不是面向模型的工具预算 |
+ | `maxRedirects` | `5` | 同源重定向最大跳数（`0` 表示不跟随） |
+ | `userAgent` | `deepseek-harness/…` | 每次请求发送的 `User-Agent` 标头 |
++| `allowClashFakeIp` | `false` | 接受 Clash 的 `198.18.0.0/15` fake-IP DNS 地址；显式非公开 IP 字面量仍会被拒绝 |
+ 
+ 生成的[配置目录](../../../docs/config-catalog.zh.md#deepseek-aidsh-web-fetch-http)是每个受支持字段及其 JSDoc 的穷尽式真源。
+ 
+@@ -61,7 +72,7 @@ const page = await ctx.web.fetch({ url: 'https://example.com' })
+ 
+ ### 传输行为
+ 
+-提供方保持请求匿名且有界：只接受不含内嵌凭据且不超过 2,048 个字符的 `http:` 与 `https:` URL。它只解析一次主机名；只要结果中有任何 IPv4 或 IPv6 地址不是公共单播地址，就拒绝整个结果，并把连接固定到已校验的地址集合。IPv6 检查会发现活动 DNS64 前缀，并拒绝指向非公开 IPv4 的转换地址。每次同源重定向都会重复解析与固定；跨源重定向会失败并要求重新调用。提供方还强制执行字节、字符、跳数和时间上限，拒绝不支持的内容类型，并发送显式产品 `User-Agent`。
++提供方保持请求匿名且有界：只接受不含内嵌凭据且不超过 2,048 个字符的 `http:` 与 `https:` URL。它只解析一次主机名；结果中只要有地址违反默认的公共地址策略，就拒绝整个结果，并把连接固定到已接受的地址集合。启用 `allowClashFakeIp` 后，只有主机名的 DNS 结果落在 Clash 的 `198.18.0.0/15` fake-IP 网段时才会加入可接受集合；连接仍然固定，显式非公开 IP 字面量和其他非公开网段继续拒绝。IPv6 检查会发现活动 DNS64 前缀，并拒绝指向非公开 IPv4 的转换地址。每次同源重定向都会重复解析与固定；跨源重定向会失败并要求重新调用。提供方还强制执行字节、字符、跳数和时间上限，拒绝不支持的内容类型，并发送显式产品 `User-Agent`。
+ 
+ ### 失败与恢复
+ 
+@@ -90,13 +101,13 @@ const page = await ctx.web.fetch({ url: 'https://example.com' })
+ |---|---|
+ | [`src/index.ts`](src/index.ts) | 插件入口：配置 schema、上限验证、提供方注册 |
+ | [`src/provider.ts`](src/provider.ts) | `HttpFetchProvider`：固定连接、重定向跟随、有界读取、charset 解码 |
+-| [`src/network.ts`](src/network.ts) | 公开地址解析、DNS64 发现与连接固定 |
++| [`src/network.ts`](src/network.ts) | 允许地址解析、DNS64 发现与连接固定 |
+ | [`src/policy.ts`](src/policy.ts) | URL 校验、同源检查、内容类型分类、charset 解析 |
+ | — | 不发布运行时不变量配套入口；除所属 seam 强制执行的约定外，本包没有独立的事件序列或可变数据关系。 |
+ 
+ ### 读取路径
+ 
+-抓取先校验 URL，只解析一次主机名，结果中只要有非公开地址就拒绝，并把连接固定到已接受地址。每次同源重定向都重复该检查；跨源重定向或非公开目标在接收响应字节前失败。最终响应按 `Content-Type` 分类、依声明的 charset 解码，并在字节上限内读取；解码后的文本再截断到字符上限。
++抓取先校验 URL，只解析一次主机名；结果中只要有地址违反当前地址策略就拒绝，并把连接固定到已接受的地址集合。默认策略拒绝非公开地址；启用 `allowClashFakeIp` 后只接受主机名 DNS 结果中的 `198.18.0.0/15`，显式非公开 IP 字面量仍会被拒绝。每次同源重定向都重复该检查；跨源重定向会在接收响应字节前失败。最终响应按 `Content-Type` 分类、依声明的 charset 解码，并在字节上限内读取；解码后的文本再截断到字符上限。
+ 
+ </details>
+ 
+diff --git a/packages/web/web-fetch-http/src/index.ts b/packages/web/web-fetch-http/src/index.ts
+index a5840f8220703ae81f676b64807366901b076318..5ee30967fc315f59d8231cc7f3ff4116dc376d0a 100644
+--- a/packages/web/web-fetch-http/src/index.ts
++++ b/packages/web/web-fetch-http/src/index.ts
+@@ -40,6 +40,8 @@ export interface Config {
+   maxRedirects?: number
+   /** `User-Agent` header sent on every request. */
+   userAgent?: string
++  /** Accept DNS answers in Clash's `198.18.0.0/15` fake-IP range. Disabled by default. */
++  allowClashFakeIp?: boolean
+ }
+ 
+ export const Config: z<Config> = z.object({
+@@ -48,6 +50,7 @@ export const Config: z<Config> = z.object({
+   timeoutMs: z.number().default(30_000),
+   maxRedirects: z.number().default(5),
+   userAgent: z.string().default(DEFAULT_USER_AGENT),
++  allowClashFakeIp: z.boolean().default(false),
+ })
+ 
+ /** Complete config after schemastery applies every field default. */
+@@ -90,5 +93,5 @@ export function apply(ctx: Context, config: Config): void {
+     maxRedirects: resolved.maxRedirects,
+     userAgent: resolved.userAgent,
+   }
+-  ctx.web.registerFetchProvider(new HttpFetchProvider(limits))
++  ctx.web.registerFetchProvider(new HttpFetchProvider(limits, undefined, resolved.allowClashFakeIp))
+ }
+diff --git a/packages/web/web-fetch-http/src/network.ts b/packages/web/web-fetch-http/src/network.ts
+index f14bf276b491b28aa6d78aebd7e394d08a388116..ccf28b90a5a0b2713e9c9be9fc1c137e97fe2d7f 100644
+--- a/packages/web/web-fetch-http/src/network.ts
++++ b/packages/web/web-fetch-http/src/network.ts
+@@ -1,7 +1,7 @@
+ /**
+  * Public-network resolution and address-pinned HTTP transport for `web-fetch-http`.
+  * One DNS answer set is validated before Undici receives it through a custom lookup,
+- * so the connection cannot resolve the hostname again to a private address.
++ * so the connection cannot resolve the hostname again to an address outside the active policy.
+  *
+  * @module @deepseek-ai/dsh-web-fetch-http/network
+  */
+@@ -30,13 +30,14 @@ export interface PinnedResponse {
+   close(): Promise<void>
+ }
+ 
+-/** Resolver signature used to test public-address policy without process DNS changes. */
++/** Resolver signature used to test the allowed-address policy without process DNS changes. */
+ export type AddressResolver = (hostname: string, options: { all: true; order: 'verbatim' }) => Promise<LookupAddress[]>
+ 
+ /** RFC 6052 prefix lengths that may carry an IPv4 destination through NAT64. */
+ const RFC6052_PREFIX_LENGTHS = [32, 40, 48, 56, 64, 96] as const
+ const IPV4ONLY_DISCOVERY_HOST = 'ipv4only.arpa'
+ const IPV4ONLY_SENTINELS = new Set(['192.0.0.170', '192.0.0.171'])
++const CLASH_FAKE_IP_RANGE = ipaddr.parseCIDR('198.18.0.0/15')
+ 
+ interface Nat64Prefix {
+   readonly bytes: readonly number[]
+@@ -64,18 +65,40 @@ export function isPublicIpAddress(input: string): boolean {
+ }
+ 
+ /**
+- * Resolve a hostname once and reject the complete answer set if any destination
+- * is not public. The returned addresses are the only ones the transport may use.
++ * Return whether an address belongs to the Clash fake-IP range.
++ *
++ * @param input - textual IPv4 or IPv6 address.
++ * @returns true only for an IPv4 address in `198.18.0.0/15`.
++ */
++export function isClashFakeIpAddress(input: string): boolean {
++  try {
++    const parsed = ipaddr.parse(stripIpv6Brackets(input))
++    return parsed instanceof ipaddr.IPv4 && parsed.match(CLASH_FAKE_IP_RANGE)
++  } catch {
++    return false
++  }
++}
++
++/** Return whether a resolved address is accepted by the configured web-fetch policy. */
++function isAllowedResolvedAddress(input: string, allowClashFakeIp: boolean): boolean {
++  return isPublicIpAddress(input) || (allowClashFakeIp && isClashFakeIpAddress(input))
++}
++
++/**
++ * Resolve a hostname once and reject the complete answer set unless every destination is public or the
++ * configured Clash fake-IP exception accepts it. The returned addresses are the only ones the transport may use.
+  *
+  * @param hostname - URL hostname, including brackets when it is an IPv6 literal.
+  * @param signal - aborts the wait for system resolution; an in-flight OS lookup may finish unused.
+  * @param resolver - lookup implementation, overridden only by focused tests.
+- * @returns the validated, non-empty address set.
++ * @param allowClashFakeIp - accepts `198.18.0.0/15`, used by Clash fake-IP DNS mode.
++ * @returns the validated, non-empty address set accepted by the active policy.
+  */
+ export async function resolvePublicAddresses(
+   hostname: string,
+   signal: AbortSignal,
+   resolver: AddressResolver = systemLookup,
++  allowClashFakeIp = false,
+ ): Promise<PublicAddress[]> {
+   const unbracketed = stripIpv6Brackets(hostname)
+   const literalFamily = isIP(unbracketed)
+@@ -97,7 +120,7 @@ export async function resolvePublicAddresses(
+     if ((entry.family !== 4 && entry.family !== 6) || isIP(entry.address) !== entry.family) {
+       throw new WebError(`hostname "${hostname}" resolved to an invalid IP address`, 'WEB_PROVIDER_ERROR')
+     }
+-    if (!isPublicIpAddress(entry.address)) {
++    if (!isAllowedResolvedAddress(entry.address, allowClashFakeIp && literalFamily === 0)) {
+       throw new WebError(`URL hostname "${hostname}" resolves to a non-public IP address`, 'WEB_BLOCKED_URL')
+     }
+     const translatedIpv4 = translatedIpv4Address(entry.address, nat64Prefixes)
+@@ -159,11 +182,11 @@ function embeddedIpv4Address(bytes: readonly number[], prefixLength: Nat64Prefix
+ }
+ 
+ /**
+- * Whether a hostname is an IP literal that {@link resolvePublicAddresses} would refuse.
++ * Whether a hostname is an IP literal outside the baseline public-address policy.
+  *
+- * A proxied hop skips those checks because the proxy resolves the origin, but a literal needs no
+- * resolution: the address is already stated, and handing it to a proxy running on this machine
+- * would reach exactly the loopback or private service the checks exist to keep out of reach.
++ * A proxied hop skips hostname resolution because the proxy resolves the origin, but a literal needs
++ * no resolution: the address is already stated. This helper deliberately ignores the optional
++ * fake-IP DNS exception so a proxy cannot use it to reach a reserved address literal.
+  *
+  * @param hostname - a URL's hostname, bracketed or not.
+  * @returns true when the host is a literal address no request may be sent to.
+@@ -174,16 +197,16 @@ export function isNonPublicIpLiteral(hostname: string): boolean {
+ }
+ 
+ /**
+- * Fetch through an agent whose lookup callback returns only the already validated address set. The
++ * Fetch through an agent whose lookup callback returns only the already validated and allowed address set. The
+  * URL hostname remains intact for HTTP Host and TLS SNI.
+  *
+- * The agent is this request's own because the address set is: pinning is how this package refuses a
+- * DNS answer that changes between validation and connection, and it may not apply process-wide —
++ * The agent is this request's own because the address set is: pinning is how this package prevents a
++ * DNS answer from changing between validation and connection, and it may not apply process-wide —
+  * an operator-configured MCP server or model endpoint on loopback is a supported destination, and
+  * only the URLs this tool fetches are the model's to choose.
+  *
+  * @param url - validated HTTP(S) URL the policy does not route through a proxy.
+- * @param addresses - public addresses returned by {@link resolvePublicAddresses}.
++ * @param addresses - addresses accepted by {@link resolvePublicAddresses}.
+  * @param headers - request headers.
+  * @param signal - request and body-read cancellation signal.
+  * @returns a response plus the disposer its consumer must call.
+@@ -238,9 +261,14 @@ export async function requestVia(
+   return { response, close: () => Promise.resolve() }
+ }
+ 
++/** Resolve one hostname with the production system resolver and the provider's address policy. */
++function resolveConfiguredAddresses(hostname: string, signal: AbortSignal, allowClashFakeIp = false): Promise<PublicAddress[]> {
++  return resolvePublicAddresses(hostname, signal, systemLookup, allowClashFakeIp)
++}
++
+ /** Production network operations kept as an object so provider tests can replace resolution only. */
+ export const publicHttpNetwork = {
+-  resolve: resolvePublicAddresses,
++  resolve: resolveConfiguredAddresses,
+   request: requestPinned,
+   requestVia,
+ }
+diff --git a/packages/web/web-fetch-http/src/provider.ts b/packages/web/web-fetch-http/src/provider.ts
+index a6ddbe03a65e3cc5b5f77b833c8676b12614a52f..2860a08c09469ddd94cce9197ddaa49f6bf4ff44 100644
+--- a/packages/web/web-fetch-http/src/provider.ts
++++ b/packages/web/web-fetch-http/src/provider.ts
+@@ -29,8 +29,8 @@ export interface HttpFetchLimits {
+   userAgent: string
+ }
+ 
+-/** Resolve one hostname to an already policy-validated address set. */
+-export type HttpFetchResolver = (hostname: string, signal: AbortSignal) => Promise<PublicAddress[]>
++/** Resolve one hostname to an address set accepted by the active web-fetch policy. */
++export type HttpFetchResolver = (hostname: string, signal: AbortSignal, allowClashFakeIp?: boolean) => Promise<PublicAddress[]>
+ 
+ /** Stable id this provider registers under. */
+ export const LOCAL_FETCH_PROVIDER_ID = 'http'
+@@ -42,10 +42,12 @@ export class HttpFetchProvider implements WebFetchProvider {
+   /**
+    * @param limits - resolved transport and response limits.
+    * @param resolveAddresses - resolver that rejects non-public destinations before returning.
++   * @param allowClashFakeIp - accepts Clash fake-IP answers when true.
+    */
+   constructor(
+     private readonly limits: HttpFetchLimits,
+     private readonly resolveAddresses: HttpFetchResolver = publicHttpNetwork.resolve,
++    private readonly allowClashFakeIp = false,
+   ) {}
+ 
+   /** No credentials to check — an anonymous public fetcher is always usable. */
+@@ -135,7 +137,7 @@ export class HttpFetchProvider implements WebFetchProvider {
+       if (route.proxied && !isNonPublicIpLiteral(url.hostname)) {
+         return await publicHttpNetwork.requestVia(route.dispatcher, url, headers, signal)
+       }
+-      const addresses = await this.resolveAddresses(url.hostname, signal)
++      const addresses = await this.resolveAddresses(url.hostname, signal, this.allowClashFakeIp)
+       return await publicHttpNetwork.request(url, addresses, headers, signal)
+     } catch (error: unknown) {
+       if (error instanceof WebError) throw error
+diff --git a/packages/web/web-fetch-http/tests/fetch-http.spec.ts b/packages/web/web-fetch-http/tests/fetch-http.spec.ts
+index 1a134f200fe60cfbafa5e484943aa4462fa3d8e1..b37b27028f940beab01f1051124f78b5648e84d1 100644
+--- a/packages/web/web-fetch-http/tests/fetch-http.spec.ts
++++ b/packages/web/web-fetch-http/tests/fetch-http.spec.ts
+@@ -6,7 +6,7 @@ import WebRuntime from '@deepseek-ai/dsh-web'
+ import { HttpFetchProvider, LOCAL_FETCH_PROVIDER_ID } from '@deepseek-ai/dsh-web-fetch-http'
+ import type { HttpFetchLimits, HttpFetchResolver } from '@deepseek-ai/dsh-web-fetch-http'
+ import * as fetchPlugin from '@deepseek-ai/dsh-web-fetch-http'
+-import { createPinnedLookup, isPublicIpAddress, publicHttpNetwork, requestPinned, resolvePublicAddresses } from '../src/network.ts'
++import { createPinnedLookup, isClashFakeIpAddress, isPublicIpAddress, publicHttpNetwork, requestPinned, resolvePublicAddresses } from '../src/network.ts'
+ import {
+   classifyContentType,
+   decoderForCharset,
+@@ -133,6 +133,39 @@ describe('public-network policy', () => {
+       ])
+   })
+ 
++  it('recognizes only Clash fake-IP addresses in the reserved range', () => {
++    expect(isClashFakeIpAddress('198.18.0.0')).toBe(true)
++    expect(isClashFakeIpAddress('198.18.0.1')).toBe(true)
++    expect(isClashFakeIpAddress('198.19.255.255')).toBe(true)
++    expect(isClashFakeIpAddress('198.20.0.1')).toBe(false)
++    expect(isClashFakeIpAddress('198.17.255.255')).toBe(false)
++    expect(isClashFakeIpAddress('::ffff:198.18.0.1')).toBe(false)
++  })
++
++  it('accepts Clash fake-IP DNS answers only when explicitly enabled', async () => {
++    const resolver = vi.fn(async () => [{ address: '198.18.0.2', family: 4 }])
++    await expect(resolvePublicAddresses('clash.test', new AbortController().signal, resolver))
++      .rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
++    await expect(resolvePublicAddresses('clash.test', new AbortController().signal, resolver, true))
++      .resolves.toEqual([{ address: '198.18.0.2', family: 4 }])
++  })
++
++  it('keeps a Clash fake-IP literal blocked even when compatibility is enabled', async () => {
++    await expect(resolvePublicAddresses('198.18.0.2', new AbortController().signal, async () => [], true))
++      .rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
++  })
++
++  it.each(['10.0.0.1', '127.0.0.1', '169.254.169.254', '100.64.0.1', '192.168.1.2', '192.0.2.1'])(
++    'keeps %s blocked alongside fake-IP answers when compatibility is enabled', async (address) => {
++      const resolver = vi.fn(async () => [
++        { address: '198.18.0.2', family: 4 },
++        { address, family: 4 },
++      ])
++      await expect(resolvePublicAddresses('private.test', new AbortController().signal, resolver, true))
++        .rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
++    },
++  )
++
+   it('rejects the whole DNS answer set when one address is not public', async () => {
+     const resolver = vi.fn(async () => [
+       { address: '8.8.8.8', family: 4 },
+@@ -276,10 +309,16 @@ describe('HttpFetchProvider success', () => {
+     const resolveAddresses = vi.fn<HttpFetchResolver>(async () => [{ address: '127.0.0.1', family: 4 }])
+     const result = await new HttpFetchProvider(limits, resolveAddresses).fetch({ url: base })
+     expect(result.statusCode).toBe(200)
+-    expect(resolveAddresses).toHaveBeenCalledWith('127.0.0.1', expect.any(AbortSignal))
++    expect(resolveAddresses).toHaveBeenCalledWith('127.0.0.1', expect.any(AbortSignal), false)
+     expect(publicHttpNetwork.resolve).not.toHaveBeenCalled()
+   })
+ 
++  it('passes the Clash fake-IP option to the injected resolver', async () => {
++    const resolveAddresses = vi.fn<HttpFetchResolver>(async () => [{ address: '127.0.0.1', family: 4 }])
++    await new HttpFetchProvider(limits, resolveAddresses, true).fetch({ url: base })
++    expect(resolveAddresses).toHaveBeenCalledWith('127.0.0.1', expect.any(AbortSignal), true)
++  })
++
+   it('sends the configured user agent', async () => {
+     let seen: string | undefined
+     handler = (req, res) => { seen = req.headers['user-agent']; res.writeHead(200, { 'content-type': 'text/plain' }); res.end('ok') }
+@@ -567,6 +606,29 @@ describe('HttpFetchProvider body cancellation on error paths', () => {
+ })
+ 
+ describe('web-fetch-http plugin registration', () => {
++  it.each([false, true])('applies allowClashFakeIp: %s to DNS validation and pinned transport', async (enabled) => {
++    const answers = [{ address: '198.18.0.2', family: 4 as const }]
++    vi.spyOn(publicHttpNetwork, 'resolve').mockImplementation((hostname, signal, allowClashFakeIp) =>
++      resolvePublicAddresses(hostname, signal, async () => answers, allowClashFakeIp))
++    const request = vi.spyOn(publicHttpNetwork, 'request').mockImplementation((_url, _addresses, headers, signal) =>
++      requestPinned(new URL(base), [{ address: '127.0.0.1', family: 4 }], headers, signal))
++    const ctx = new Context()
++    try {
++      await ctx.plugin(WebRuntime)
++      await ctx.plugin(fetchPlugin, { allowClashFakeIp: enabled })
++      const result = ctx.web.fetch({ url: 'https://clash.test/page' })
++      if (enabled) {
++        await expect(result).resolves.toMatchObject({ statusCode: 200, body: { content: 'default' } })
++        expect(request).toHaveBeenCalledWith(new URL('https://clash.test/page'), answers, expect.any(Object), expect.any(AbortSignal))
++      } else {
++        await expect(result).rejects.toThrow(expect.objectContaining({ code: 'WEB_BLOCKED_URL' }))
++        expect(request).not.toHaveBeenCalled()
++      }
++    } finally {
++      await ctx.fiber.dispose()
++    }
++  })
++
+   it('registers the provider into ctx.web (HMR-safe)', async () => {
+     const ctx = new Context()
+     await ctx.plugin(WebRuntime, { fetchProvider: LOCAL_FETCH_PROVIDER_ID })

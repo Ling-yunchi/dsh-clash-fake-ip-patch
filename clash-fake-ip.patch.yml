@@ -1,0 +1,5 @@
+# Enable Clash fake-IP DNS compatibility for the shipped web profile.
+# Use only with a trusted Clash TUN mapping for 198.18.0.0/15.
+- id: web-fetch-http
+  config:
+    allowClashFakeIp: true
