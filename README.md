@@ -2,20 +2,20 @@
 
 为 DeepSeek Harness 的 `web_fetch` 增加 Clash TUN/fake-IP DNS 兼容。安装一次后由 profile 自动加载，不需要修改 Harness 源码、重建 Harness 或每次添加 `--patch`。
 
-包名：`dsh-clash-fake-ip`。当前版本：`0.1.0`。兼容并验证的 Harness 版本：`0.2.0-rc.2`；Node 要求与该版本 Harness 一致：`^22.19.0 || >=24.0.0`。
+包名：`dsh-clash-fake-ip`。当前版本：`0.1.1`。兼容并验证的 Harness 版本：`0.2.1-rc.3`；Node 要求与该版本 Harness 一致：`^22.19.0 || >=24.0.0`。
 
 ## 安装
 
 使用已安装的 DSH CLI：
 
 ```sh
-dsh plugin --profile web add https://github.com/Ling-yunchi/dsh-clash-fake-ip-patch/releases/download/v0.1.0/dsh-clash-fake-ip-0.1.0.tgz
+dsh plugin --profile web add https://github.com/Ling-yunchi/dsh-clash-fake-ip-patch/releases/download/v0.1.1/dsh-clash-fake-ip-0.1.1.tgz
 ```
 
 也可以直接从 GitHub 的固定版本安装：
 
 ```sh
-dsh plugin --profile web add github:Ling-yunchi/dsh-clash-fake-ip-patch#v0.1.0
+dsh plugin --profile web add github:Ling-yunchi/dsh-clash-fake-ip-patch#v0.1.1
 ```
 
 如果从 Harness 源码仓库启动，把命令开头的 `dsh` 替换为 `pnpm dsh`。包内已包含可执行 ESM JavaScript，没有 `prepare`、`postinstall` 或其他安装脚本。
@@ -95,7 +95,7 @@ npm run test:live
 
 真实安装/卸载测试还需要设置 `DSH_TEST_CLI` 为已构建的 DSH CLI 入口绝对路径，再执行 `npm run test:install`；该测试创建隔离的 `DSH_HOME`，不会改动正在使用的 profile。可选 `DSH_TEST_SPEC` 指定待测 tarball，默认安装本地扩展目录。
 
-本次验证使用 npm 发布的未修补 `@deepseek-ai/dsh-web-fetch-http@0.2.0-rc.2`，并检查它不含 `allowClashFakeIp`。真实网络下，原版后端拒绝 fake-IP；扩展成功读取 GitHub、GitHub API 和 example.com，均返回 HTTP 200。真实 CLI 安装后成功抓取，卸载后恢复原版拒绝行为。CLI 来自当前 Harness 构建；抓取对比使用独立安装的原版 npm 后端。本机 Node `22.18.0` 低于声明范围，测试出现 engines 警告，部署应使用受支持版本。
+现有真实网络验证使用未修补的 `@deepseek-ai/dsh-web-fetch-http@0.2.0-rc.2`，并检查它不含 `allowClashFakeIp`；插件的兼容声明已针对 Harness `0.2.1-rc.3` 更新。真实网络下，原版后端拒绝 fake-IP；扩展成功读取 GitHub、GitHub API 和 example.com，均返回 HTTP 200。真实 CLI 安装后成功抓取，卸载后恢复原版拒绝行为。CLI 来自当前 Harness 构建；抓取对比使用独立安装的原版 npm 后端。本机 Node `22.18.0` 低于声明范围，测试出现 engines 警告，部署应使用受支持版本。
 
 ## 许可证
 

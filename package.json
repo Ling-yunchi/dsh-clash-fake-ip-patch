@@ -1,6 +1,6 @@
 {
   "name": "dsh-clash-fake-ip",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Installable Clash fake-IP DNS compatibility for DeepSeek Harness web_fetch",
   "type": "module",
   "main": "./src/index.js",
@@ -26,9 +26,9 @@
   },
   "dependencies": { "ipaddr.js": "^2.5.0" },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "~4.0.4",
-    "@deepseek-ai/dsh-web": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-web-fetch-http": "0.2.0-rc.2"
+    "@deepseek-ai/cordis": "~4.0.5",
+    "@deepseek-ai/dsh-web": "^0.2.1-rc.3",
+    "@deepseek-ai/dsh-web-fetch-http": "^0.2.1-rc.3"
   },
   "devDependencies": {
     "@types/node": "^22.19.0",
